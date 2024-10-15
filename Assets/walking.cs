@@ -4,7 +4,10 @@ using UnityEngine;
 
 public class walking : MonoBehaviour
 {
-    public float spd=1.0f;
+    public float spd=0.000001f;
+    public Camera cam;
+    public GameObject bulletPrefab;
+    
     // Start is called before the first frame update
     void Start()
     {
@@ -13,41 +16,80 @@ public class walking : MonoBehaviour
 
     // Update is called once per frame
     void Update()
-    {
-        if(Input.GetKey(KeyCode.W))
+    {    
+
+
+        RaycastHit hit;
+        Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+        if(Physics.Raycast(ray, out hit))
         {
-            transform.Translate(0,0,spd*Time.deltaTime);
+            Vector3 hitPoint = hit.point;
+            hitPoint.y = transform.position.y;
+            transform.LookAt(hitPoint);
         }
 
-        if(Input.GetKey(KeyCode.S))
+        anim();
+        if(Input.GetMouseButtonDown(0))
         {
-            transform.Translate(0,0,spd*Time.deltaTime*-1);
+            shoot();
         }
-
-        if(Input.GetKey(KeyCode.D))
-        {
-            transform.Translate(spd*Time.deltaTime,0,0);
-        }
-
-        if(Input.GetKey(KeyCode.A))
-        {
-            transform.Translate(spd*Time.deltaTime*-1,0,0);
-        }
-
-        Vector2 positionOnScreen = Camera.main.WorldToViewportPoint(transform.position);
-
-        Vector2 mouseOnScreen =(Vector2)Camera.main.ScreenToViewportPoint(Input.MousePosition);
-
-        public float angle = Angle(positionOnScreen,mouseOnScreen);
-
-        transform.rotation = Quaternion.Euler(new Vector3(0f,0f,angle));
 
 
     }
 
-    float Angle(Vector3 a, Vector3 b)
+    public void anim()
     {
-        return  Mathf.Atan2(a.y - b.y, a.x-b.x) * Mathf.Rad2Deg;
+        if(Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.D))   
+        {
+            this.GetComponent<Animator>().Play("demo_combat_run");
+        }
+        else
+        {
+            this.GetComponent<Animator>().Play("demo_combat_idle");  
+        }
+    }
+
+    public void FixedUpdate()
+    {
+        Vector3 dir= transform.forward;
+        dir = transform.InverseTransformDirection(dir);
+        dir.y = 0;
+        dir.Normalize();
+        Vector3 dir1 = transform.right;
+        dir1 = transform.InverseTransformDirection(dir1);
+        dir1.y=0;
+        dir1.Normalize();
+
+        if(Input.GetKey(KeyCode.W))
+        {
+            transform.position += dir * Input.GetAxis("Vertical" ) * spd;
+        }
+
+        if(Input.GetKey(KeyCode.S))
+        {
+            transform.position += dir * Input.GetAxis("Vertical" ) * spd;
+        }
+
+        
+        if(Input.GetKey(KeyCode.D))
+        {
+            transform.position += dir1 * Input.GetAxis("Horizontal" ) * spd;
+        }
+
+        if(Input.GetKey(KeyCode.A))
+        {
+            transform.position += dir1 * Input.GetAxis("Horizontal" ) * spd;
+        }
+
+        
+    }
+    
+    public void shoot()
+    {
+        GameObject bullet = GameObject.Instantiate(bulletPrefab);
+        bullet.transform.position = transform.position + new Vector3 (0f,2f,0);
+        bullet.GetComponent<Rigidbody>().AddForce(transform.forward * 400);
+
     }
 
     
